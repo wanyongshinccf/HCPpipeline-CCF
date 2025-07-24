@@ -34,6 +34,8 @@ volmot1d=${7} # 1dsliacqtime
 physio1d=${8} # 1dsliacqtime
 tfile=${9} # 1dsliacqtime
 
+TESTWS=0
+if [ $TESTWS -gt 0 ]; then
 fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
 input=$fMRIFolder/rfMRI_REST1_RL_gdc
 output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
@@ -44,6 +46,7 @@ slomocodir="$fMRIFolder"/SLOMOCO
 volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
 physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
 tfile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
+fi
 
 # define dir
 inplanedir="$slomocodir/inplane"
