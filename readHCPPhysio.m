@@ -19,7 +19,15 @@ RSR_physio=40; % since SR_sli = 80
 
 % sanity check
 tdim_est = round(length(trig)/SR_physio/tr);
-if (tdim ~= tdim_est); disp('Error Physio file size is not correct'); end
+if (tdim ~= tdim_est); 
+  disp('Warning Physio file size is different from the corresponding EPI'); 
+  disp([ 'tdim of EPI = ' num2str(tdim)]);
+  disp([ 'tdim of physiofile = ' num2str(tdim_est)])
+  disp('Use Physio file tdim')
+  tdim = tdim_est; 
+  TA=tr*tdim;
+end
+
 temp = diff(trig);
 extrig=find(temp==1); extrig = [1; extrig];
 temp2 = diff(extrig); temp2(1)=temp2(1)+1;

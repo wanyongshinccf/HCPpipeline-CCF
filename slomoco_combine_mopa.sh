@@ -32,8 +32,9 @@ let "zmbdim=${zdim}/${SMSfactor}"
 
 # order: x-shift, y-shift, z-shift, x-rot, yrot, zrot
 str_conca=""
-for ((zmb = 0 ; zmb < $zmbdim ; zmb++ )); 
+for ((z = 0 ; z < $zdim ; z++ )); 
 do
+    zmb=$(($z%$SMSfactor))
     inpar="${inplanedir}/mopa_z`printf %04d $zmb`.par"
     outpar="${outofplanedir}/mopa_z`printf %04d $zmb`.par"
 
@@ -44,20 +45,18 @@ do
     cat $outpar | cut -d " " -f 5 > ${slomocodir}/yrad.1D
     cat $inpar | cut -d " " -f 6 > ${slomocodir}/zrad.1D
     
-    paste ${slomocodir}/xmm.1D ${slomocodir}/ymm.1D ${slomocodir}/zmm.1D ${slomocodir}/xrad.1D ${slomocodir}/yrad.1D ${slomocodir}/zrad.1D > ${slomocodir}/slimopa_z`printf %04d $zmb`.txt
-    str_conca="$str_conca ${slomocodir}/slimopa_z`printf %04d $zmb`.txt"
+    paste ${slomocodir}/xmm.1D ${slomocodir}/ymm.1D ${slomocodir}/zmm.1D ${slomocodir}/xrad.1D ${slomocodir}/yrad.1D ${slomocodir}/zrad.1D > ${slomocodir}/slimopa_z`printf %04d $z`.1D
+    str_conca="$str_conca ${slomocodir}/slimopa_z`printf %04d $z`.1D"
+    #paste ${slomocodir}/xmm.1D ${slomocodir}/ymm.1D ${slomocodir}/zmm.1D ${slomocodir}/xrad.1D ${slomocodir}/yrad.1D ${slomocodir}/zrad.1D > ${slomocodir}/rm.slimopa.1D
+    #paste ${slomocodir}/rm.slimopa.1D >> ${slomocodir}/slimopa.1D
 done
+paste `echo $str_conca` > ${slomocodir}/slimopa.1D
 
-# Let's figure out later how to sort them out in OneSampling_SLOMOCO.sh
-for ((mb = 0 ; mb < $SMSfactor ; mb++ )); 
-do
-    test=$mb
-done
 
 # cleanup
 \rm -rf ${slomocodir}/*mm.1D    \
         ${slomocodir}/*rad.1D   \
-        ${outofplanedir}/epi* 
+        ${slomocodir}/slimopa_z*.1D  
         
         
 

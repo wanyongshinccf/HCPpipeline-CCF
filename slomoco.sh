@@ -28,12 +28,27 @@ input=`${FSLDIR}/bin/remove_ext ${1}`
 output=`${FSLDIR}/bin/remove_ext ${2}`
 base=`${FSLDIR}/bin/remove_ext ${3}`
 mask=`${FSLDIR}/bin/remove_ext ${4}`
-motionmatrixdir=${5} #MotionMatrices
+motionmatrixdir=${5} #MotionMatrices "$fMRIFolder"/MotionCorrection/"$NameOffMRI".par  
 slomocodir=${6}
-tfile=${7} # 1dsliacqtime
+volmot1d=${7} # 1dsliacqtime
+physio1d=${8} # 1dsliacqtime
+tfile=${9} # 1dsliacqtime
 
-inplanedir=$slomocodir/inplane
-outofplanedir=$slomocodir/outofplane
+fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
+input=$fMRIFolder/rfMRI_REST1_RL_gdc
+output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
+base=$fMRIFolder/Scout_gdc
+mask=$fMRIFolder/Scout_gdc_mask
+motionmatrixdir=$fMRIFolder/MotionMatrices
+slomocodir="$fMRIFolder"/SLOMOCO                               
+volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
+physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
+tfile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
+
+# define dir
+inplanedir="$slomocodir/inplane"
+outofplanedir="$slomocodir/outofplane"
+pvdir="$slomocodir/pv"
 
 # read tfile and calculate SMS factor  
 SMSfactor=0
@@ -62,9 +77,9 @@ echo "Do SLOMOCO HCP"
 # inplane motion correction
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
 echo "SLOMOCO STEP1: Inplane motion correction"
-$RUN "$SLOMOCOHCPDIR"/slomoco_inplane.sh \
+$RUN "$HCPPIPECCFDIR"/slomoco_inplane.sh \
     ${input}              \
-    ${output}             \
+    $slomocodir/epi_mocoxy       \
     ${base}               \
     ${mask}               \
     ${motionmatrixdir}    \
@@ -74,8 +89,8 @@ $RUN "$SLOMOCOHCPDIR"/slomoco_inplane.sh \
 # out-of-plane motion estimation (NOT CORRECTION)
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
 echo "SLOMOCO STEP2: Out-of-plane motion estimation"
-$RUN "$SLOMOCOHCPDIR"/slomoco_outofplane.sh \
-    ${output}             \
+$RUN "$HCPPIPECCFDIR"/slomoco_outofplane.sh \
+    $slomocodir/epi_mocoxy      \
     ${base}               \
     ${mask}               \
     ${motionmatrixdir}    \
@@ -85,9 +100,28 @@ $RUN "$SLOMOCOHCPDIR"/slomoco_outofplane.sh \
 # combine in- and out-of-plane motion parameter
 echo "SLOMOCO STEP3: Combine in-/out-of-plane motion parameters."
 echo "               Will be used as slicewise motion nuisance regressors"
-$RUN "$SLOMOCOHCPDIR"/slomoco_combine_mopa.sh \
-    ${output}           \
+$RUN "$HCPPIPECCFDIR"/slomoco_combine_mopa.sh \
+    ${input}           \
     ${slomocodir}       \
     ${inplanedir}       \
     ${outofplanedir}    \
     ${SMSfactor}
+
+# HCP version of gen_pvreg.tcsh
+echo "SLOMOCO STEP4: Voxelwise partial volume regressor." 
+$RUN "$HCPPIPECCFDIR"/slomoco_pv_reg.sh \
+    ${input}            \
+    ${slomocodir}/epi_pv         \
+    ${motionmatrixdir}    \
+    ${pvdir}
+
+# regress-out 
+echo "SLOMOCO STEP5: Regress out 13 vol-/sli-/voxel-regressors."
+$RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
+    ${inputput}_mocoxy           \
+    ${output}    \
+    ${slomocodir}       \
+    ${votmot1d}    \
+    ${slomocodir}/slimopa.1D    \
+    ${physio1d}    \
+    ${input}_pv

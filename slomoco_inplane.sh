@@ -31,9 +31,6 @@ inplanedir=${7}
 #SMSfactor=8
 
 # generate inplane directory
-if [ ! -d ${workdir} ]; then
-    mkdir -p ${workdir}
-fi
 if [ ! -d ${inplanedir} ]; then
     mkdir -p ${inplanedir}
 fi
