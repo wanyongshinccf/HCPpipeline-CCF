@@ -14,17 +14,17 @@ Usage() {
 
 [ "$2" = "" ] && Usage
 
-physiofile=${1}
+pfile=${1}
 input=`${FSLDIR}/bin/remove_ext ${2}`
 tfile=${3} # 1dsliacqtime
 
 # remove later
-physiofile="/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/Physio/PhysioLog.txt"
-input="/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/rfMRI_REST1_RL_orig.nii.gz"
-tfile="/mnt/hcp01/SLOMOCO_HCP/SliceAcqTime_3T_TR720ms.txt"
+#physiofile="/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/Physio/PhysioLog.txt"
+#input="/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/rfMRI_REST1_RL_orig.nii.gz"
+#tfile="/mnt/hcp01/SLOMOCO_HCP/SliceAcqTime_3T_TR720ms.txt"
 
 # define output directory
-odir=`dirname $physiofile`
+odir=`dirname $pfile`
 
 
 # read tfile and calculate SMS factor  
@@ -57,4 +57,4 @@ fi
 
 echo "Generate Slicewise physio regressor 1D file"
 # will be replaced with MCR 
-matlab -nodesktop -nosplash -r "addpath $PESTICAHCPDIR; readHCPPhysio('${pfile}','${tfile}','${odir}',${tr},${tdim},${zdim},${SMSfactor}); exit;" 
+matlab -nodesktop -nosplash -r "addpath $HCPPIPECCFDIR; readHCPPhysio('${pfile}','${tfile}','${odir}',${tr},${tdim},${zdim},${SMSfactor}); exit;" 
