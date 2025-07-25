@@ -133,7 +133,7 @@ $RUN "$HCPPIPECCFDIR"/slomoco_onesampling.sh \
 echo "SLOMOCO STEP5: Voxelwise partial volume regressor." 
 $RUN "$HCPPIPECCFDIR"/slomoco_pvreg.sh \
     ${InputfMRI}                \
-    ${SLOMOCOFolder}/epi_pv     \
+    ${SLOMOCOFolder}/epi_gdc_pv     \
     ${GradientDistortionField}  \
     ${MotionMatrixFolder}       \
     ${PartialVolumeFolder}
@@ -148,4 +148,6 @@ $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
     ${VolumeMotion1D}               \
     ${SLOMOCOFolder}/slimopa.1D     \
     ${PhysioRegressor1D}            \
-    ${SLOMOCOFolder}/epi_pv 
+    ${SLOMOCOFolder}/epi_gdc_pv 
+
+rm -f ${SLOMOCOFolder}/epi_mocoxy* \
