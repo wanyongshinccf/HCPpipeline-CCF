@@ -123,6 +123,7 @@ echo "SLOMOCO STEP5: Regress out 13 vol-/sli-/voxel-regressors."
 $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
     ${inputput}_mocoxy           \
     ${output}    \
+    ${mask}       \
     ${slomocodir}       \
     ${votmot1d}    \
     ${slomocodir}/slimopa.1D    \

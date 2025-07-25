@@ -23,9 +23,7 @@ if (tdim ~= tdim_est);
   disp('Warning Physio file size is different from the corresponding EPI'); 
   disp([ 'tdim of EPI = ' num2str(tdim)]);
   disp([ 'tdim of physiofile = ' num2str(tdim_est)])
-  disp('Use Physio file tdim')
-  tdim = tdim_est; 
-  TA=tr*tdim;
+  disp('Truncate physio file based on EPI size')
 end
 
 temp = diff(trig);

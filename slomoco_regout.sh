@@ -13,21 +13,26 @@ Usage() {
 
 input=`${FSLDIR}/bin/remove_ext ${1}`
 output=`${FSLDIR}/bin/remove_ext ${2}`
-slomocodir=${3}
-volmot1d=${4} #MotionMatrices
-slimot1d=${5}
-physio1d=${6}
-voxelpv=${7}
+mask=${3}
+slomocodir=${4}
+volmot1d=${5} #MotionMatrices
+slimot1d=${6}
+physio1d=${7}
+voxelpv=${8}
 
-# test purpose, will be deleted
-#fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
-#input=$fMRIFolder/rfMRI_REST1_RL_gdc.nii.gz
-#output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco                                      
-#volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
-#physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
-#slimot1d="$fMRIFolder"/SLOMOCO/slimopa.1D
-#voxelpv="$fMRIFolder"/SLOMOCO/epi_pv
-#slomocodir="$fMRIFolder"/SLOMOCO
+TESTWS=1
+if [ $TESTWS -gt 0 ]; then
+fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
+input=$fMRIFolder/rfMRI_REST1_RL_gdc
+output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
+base=$fMRIFolder/Scout_gdc
+mask=$fMRIFolder/Scout_gdc_mask
+motionmatrixdir=$fMRIFolder/MotionMatrices
+slomocodir="$fMRIFolder"/SLOMOCO                               
+volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
+physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
+tfile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
+fi
 
 # Step 1; prepare volmot + polinomial detrending
 1d_tool.py                  \
@@ -35,11 +40,11 @@ voxelpv=${7}
     -demean                 \
     -write $slomocodir/__rm.mopa6.demean.1D  \
     -overwrite
-    -mask   ${epi_mask}                                                 \
+    
     
 # volmopa includues the polinominal (linear) detrending 
 3dDeconvolve                                                            \
-    -input  ${input}                                                      \
+    -input  ${input}.nii.gz                                                      \
     -polort A                                                    \
     -num_stimts 6                                                       \
     -stim_file 1 $slomocodir/__rm.mopa6.demean.1D'[0]' -stim_label 1 mopa1 -stim_base 1 	\
@@ -53,7 +58,7 @@ voxelpv=${7}
     -overwrite
 
 # update 
-volregstr="-matrix volmot.1D "
+volregstr="-matrix volreg.1D "
 
 # step2 slimopa + physio 1D
 1d_tool.py                  \
@@ -69,7 +74,8 @@ volregstr="-matrix volmot.1D "
     -overwrite
 
 # replace zero vectors with linear one
-\rm -f $slomocodir/__rm.sliregs.1D 
+\rm -f  $slomocodir/__rm.slimotzp.1D \
+        $slomocodir/slireg.1D
 python $HCPPIPECCFDIR/patch_zeros.py    \
     -infile $slomocodir/__rm.slimot.1D \
     -write  $slomocodir/__rm.slimotzp.1D  
