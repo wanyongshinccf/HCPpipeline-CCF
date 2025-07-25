@@ -11,18 +11,19 @@ tshift=load(tfile);
 % calculate
 zmbdim = zdim/smsfactor;
 SR_sli=tr/zmbdim;
-TA=tr*tdim;
+TA_epi=tr*tdim;
 
 % fixed 
 SR_physio=1000/2.5; % 2.5msms
 RSR_physio=40; % since SR_sli = 80
 
 % sanity check
-tdim_est = round(length(trig)/SR_physio/tr);
-if (tdim ~= tdim_est); 
+tdim_physio = round(length(trig)/SR_physio/tr);
+TA_physio = tr*tdim_physio;
+if (tdim ~= tdim_physio); 
   disp('Warning Physio file size is different from the corresponding EPI'); 
   disp([ 'tdim of EPI = ' num2str(tdim)]);
-  disp([ 'tdim of physiofile = ' num2str(tdim_est)])
+  disp([ 'tdim of physiofile = ' num2str(tdim_physio)])
   disp('Truncate physio file based on EPI size')
 end
 
@@ -36,8 +37,8 @@ if length(find(temp2~=tp_exp))
 end
 
 % resample card and resp with SRS_physio
-t1 = 0:1/SR_physio:TA+1; t1(length(trig)+1:end)=[];
-t2 = 0:1/RSR_physio:TA; t2(end)=[];
+t1 = 0:1/SR_physio:TA_physio+1; t1(length(trig)+1:end)=[];
+t2 = 0:1/RSR_physio:TA_epi; t2(end)=[];
 card_res = pchip(t1,card,t2);
 resp_res = pchip(t1,resp,t2);
 

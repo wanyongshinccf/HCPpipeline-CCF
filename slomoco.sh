@@ -24,34 +24,38 @@ Usage() {
 
 [ "$2" = "" ] && Usage
 
-input=`${FSLDIR}/bin/remove_ext ${1}`
-output=`${FSLDIR}/bin/remove_ext ${2}`
-base=`${FSLDIR}/bin/remove_ext ${3}`
-mask=`${FSLDIR}/bin/remove_ext ${4}`
-motionmatrixdir=${5} #MotionMatrices "$fMRIFolder"/MotionCorrection/"$NameOffMRI".par  
-slomocodir=${6}
-volmot1d=${7} # 1dsliacqtime
-physio1d=${8} # 1dsliacqtime
-tfile=${9} # 1dsliacqtime
+InputfMRI=`${FSLDIR}/bin/remove_ext ${1}`
+InputfMRIgdc=`${FSLDIR}/bin/remove_ext ${2}`
+OutputfMRI=`${FSLDIR}/bin/remove_ext ${3}`
+ScoutInput=`${FSLDIR}/bin/remove_ext ${4}`
+ScoutInput_mask=`${FSLDIR}/bin/remove_ext ${5}`
+MotionMatrixFolder=${6} #MotionMatrices "$fMRIFolder"/MotionCorrection/"$NameOffMRI".par  
+SLOMOCOFolder=${7}
+GradientDistortionField=${8}
+VolumeMotion1D=${9} # 1dsliacqtime
+PhysioRegressor1D=${10} # 1dsliacqtime
+SliAcqTimeFile=${11} # 1dsliacqtime
 
 TESTWS=0
 if [ $TESTWS -gt 0 ]; then
 fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
-input=$fMRIFolder/rfMRI_REST1_RL_gdc
-output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
-base=$fMRIFolder/Scout_gdc
-mask=$fMRIFolder/Scout_gdc_mask
-motionmatrixdir=$fMRIFolder/MotionMatrices
-slomocodir="$fMRIFolder"/SLOMOCO                               
-volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
-physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
-tfile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
+InputfMRI=$fMRIFolder/rfMRI_REST1_RL_orig
+InputfMRIgdc=$fMRIFolder/rfMRI_REST1_RL_gdc
+OutfMRI=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
+ScoutInput=$fMRIFolder/Scout_gdc
+ScoutInput_mask=$fMRIFolder/Scout_gdc_mask
+MotionMatrixFolder=$fMRIFolder/MotionMatrices
+SLOMOCOFolder="$fMRIFolder"/SLOMOCO                 
+GradientDistortionField="$fMRIFolder"/rfMRI_REST1_RL_gdc_warp         
+VolumeMotion1D="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
+PhysioRegressor1D="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
+SliAcqTimeFile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
 fi
 
 # define dir
-inplanedir="$slomocodir/inplane"
-outofplanedir="$slomocodir/outofplane"
-pvdir="$slomocodir/pv"
+InplaneMotinFolder="$SLOMOCOFolder/inplane"
+OutofPlaneMotionFolder="$SLOMOCOFolder/outofplane"
+PartialVolumeFolder="$SLOMOCOFolder/pv"
 
 # read tfile and calculate SMS factor  
 SMSfactor=0
@@ -61,11 +65,11 @@ while IFS= read -r line; do
   if [ $line == "0" ] || [ $line == "0.0" ] ; then
     let "SMSfactor+=1"
   fi
-done < "$tfile"
+done < "$SliAcqTimeFile"
 echo "inplane acceleration is $SMSfactor based on slice acquisition timing file."
 
 # sanity check
-zdim=`fslval $input dim3`
+zdim=`fslval $InputfMRI dim3`
 if [ $SMSfactor == 0 ] ; then
     echo "ERROR: slice acquisition timing does not have zero"
     exit
@@ -80,52 +84,68 @@ echo "Do SLOMOCO HCP"
 # inplane motion correction
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
 echo "SLOMOCO STEP1: Inplane motion correction"
-$RUN "$HCPPIPECCFDIR"/slomoco_inplane.sh \
-    ${input}              \
-    $slomocodir/epi_mocoxy       \
-    ${base}               \
-    ${mask}               \
-    ${motionmatrixdir}    \
-    ${SMSfactor}          \
-    ${inplanedir}
+$RUN "$HCPPIPECCFDIR"/slomoco_inplane.sh    \
+    ${InputfMRIgdc}                         \
+    ${SLOMOCOFolder}/epi_gdc_mocoxy         \
+    ${ScoutInput}                           \
+    ${ScoutInput_mask}                      \
+    ${MotionMatrixFolder}                   \
+    ${SMSfactor}                            \
+    ${InplaneMotinFolder}
 
 # out-of-plane motion estimation (NOT CORRECTION)
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
 echo "SLOMOCO STEP2: Out-of-plane motion estimation"
 $RUN "$HCPPIPECCFDIR"/slomoco_outofplane.sh \
-    $slomocodir/epi_mocoxy      \
-    ${base}               \
-    ${mask}               \
-    ${motionmatrixdir}    \
-    ${SMSfactor}          \
-    ${outofplanedir}
+    ${SLOMOCOFolder}/epi_gdc_mocoxy         \
+    ${ScoutInput}                           \
+    ${ScoutInput_mask}                      \
+    ${MotionMatrixFolder}                   \
+    ${SMSfactor}                            \
+    ${OutofPlaneMotionFolder}
 
 # combine in- and out-of-plane motion parameter
 echo "SLOMOCO STEP3: Combine in-/out-of-plane motion parameters."
 echo "               Will be used as slicewise motion nuisance regressors"
 $RUN "$HCPPIPECCFDIR"/slomoco_combine_mopa.sh \
-    ${input}           \
-    ${slomocodir}       \
-    ${inplanedir}       \
-    ${outofplanedir}    \
+    ${InputfMRI}                \
+    ${SLOMOCOFolder}            \
+    ${InplaneMotinFolder}       \
+    ${OutofPlaneMotionFolder}   \
+    ${SMSfactor}
+
+# onesampling in native space 
+echo "SLOMOCO STEP4: Combine GDC and SLOMOCO motion correction."
+echo "               Due to slicewise regressors in a native space,"
+echo "               SLOMOCO is resampled first in native space with regress-out."
+echo "               Then move to MNI space later again using OneSampling_SLOMOCO.sh"
+$RUN "$HCPPIPECCFDIR"/slomoco_onesampling.sh \
+    ${InputfMRI}                \
+    ${OutputfMRI}               \
+    ${GradientDistortionField}  \
+    ${MotionMatrixFolder}       \
+    ${SLOMOCOFolder}            \
+    ${InplaneMotinFolder}       \
+    ${OutofPlaneMotionFolder}   \
     ${SMSfactor}
 
 # HCP version of gen_pvreg.tcsh
-echo "SLOMOCO STEP4: Voxelwise partial volume regressor." 
-$RUN "$HCPPIPECCFDIR"/slomoco_pv_reg.sh \
-    ${input}            \
-    ${slomocodir}/epi_pv         \
-    ${motionmatrixdir}    \
-    ${pvdir}
+echo "SLOMOCO STEP5: Voxelwise partial volume regressor." 
+$RUN "$HCPPIPECCFDIR"/slomoco_pvreg.sh \
+    ${InputfMRI}                \
+    ${SLOMOCOFolder}/epi_pv     \
+    ${GradientDistortionField}  \
+    ${MotionMatrixFolder}       \
+    ${PartialVolumeFolder}
 
 # regress-out 
-echo "SLOMOCO STEP5: Regress out 13 vol-/sli-/voxel-regressors."
+echo "SLOMOCO STEP6: Regress out 13 vol-/sli-/voxel-regressors."
 $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
-    ${inputput}_mocoxy           \
-    ${output}    \
-    ${mask}       \
-    ${slomocodir}       \
-    ${votmot1d}    \
-    ${slomocodir}/slimopa.1D    \
-    ${physio1d}    \
-    ${input}_pv
+    ${InputfMRI}_mocoxy           \
+    ${OutputfMRI}    \
+    ${ScoutInput_mask}       \
+    ${SLOMOCOFolder}       \
+    ${VolumeMotion1D}    \
+    ${SLOMOCOFolder}/slimopa.1D    \
+    ${PhysioRegressor1D}    \
+    ${SLOMOCOFolder}/epi_pv 

@@ -38,6 +38,7 @@ fi
 # read dimensions
 zdim=`fslval $input dim3`
 tdim=`fslval $input dim4`
+tr=`fslval $input pixdim4`
 let "zmbdim=$zdim/$SMSfactor"
 
 # generate each volume of input
@@ -109,7 +110,7 @@ do
 done
 
 # combine all the volumes
-${FSLDIR}/bin/fslmerge -t ${inplanedir}/epi_mc `echo $str_tcombined`
+${FSLDIR}/bin/fslmerge -tr ${inplanedir}/epi_mc `echo $str_tcombined` $tr
 ${FSLDIR}/bin/immv ${inplanedir}/epi_mc ${output}
 
 # convert matrix to motion parameters, snipping from mcflirt.sh

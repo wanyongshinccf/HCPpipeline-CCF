@@ -13,14 +13,23 @@ Usage() {
 
 input=`${FSLDIR}/bin/remove_ext ${1}`
 output=`${FSLDIR}/bin/remove_ext ${2}`
-MotionMatrixDir=${3} #MotionMatrices
-pvdir=${4}
+GradientDistortionField=`${FSLDIR}/bin/remove_ext${3}` 
+MotionMatrixDir=${4} #MotionMatrices
+pvdir=${5}
 
-# test purpose, will be deleted
-#input=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/rfMRI_REST1_RL_mc
-#output=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/rfMRI_REST1_RL_mc_pv
-#MotionMatrixDir=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/MotionMatrices
-#pvdir=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL/SLOMOCO/pv  
+TESTWS=0
+if [ $TESTWS -gt 0 ]; then
+fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
+input=$fMRIFolder/rfMRI_REST1_RL
+output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco        
+GradientDistortionField=${3}"$fMRIFolder"/rfMRI_REST1_RL_gdc_warp \  
+MotionMatrixDir=$fMRIFolder/MotionMatrices
+slomocodir="$fMRIFolder"/SLOMOCO                 
+gdfield="$fMRIFolder"/rfMRI_REST1_RL_gdc_warp \              
+volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
+physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
+tfile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
+fi
 
 # generate inplane directory
 if [ ! -d ${pvdir} ]; then
@@ -43,6 +52,14 @@ do
     tnum=`printf %04d $t`
     fmat=${MotionMatrixDir}/MAT_`printf %04d $t`
     convert_xfm -omat $pvdir/bmat -inverse $fmat
+
+    ${FSLDIR}/bin/convertwarp \
+        --relout \
+        --rel \
+        --ref=${OSDir}/prevols/sli${znum}.nii.gz \
+        --warp1=${GDField} \
+        --postmat=${OSDir}/prevols/volslimatrix \
+        --out=${OSDir}/sli_gdc_warp${znum}.nii.gz
 
     # inject the inverse motion
     flirt                                       \
