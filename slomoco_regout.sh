@@ -20,7 +20,7 @@ slimot1d=${6}
 physio1d=${7}
 voxelpv=${8}
 
-TESTWS=1
+TESTWS=0
 if [ $TESTWS -gt 0 ]; then
 fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
 input=$fMRIFolder/rfMRI_REST1_RL_gdc
@@ -40,7 +40,6 @@ fi
     -demean                 \
     -write $slomocodir/__rm.mopa6.demean.1D  \
     -overwrite
-    
     
 # volmopa includues the polinominal (linear) detrending 
 3dDeconvolve                                                            \

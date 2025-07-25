@@ -67,7 +67,7 @@ for ((t=0; t < $tdim; t++)); do
         let "zmb=$z%$SMSfactor" || true
         zmbnum=`${FSLDIR}/bin/zeropad $zmb 4`
         znum=`${FSLDIR}/bin/zeropad $z 4`
-        slimatrix="${InplaneMotinFolder}/epiSMSsli_mc_mat_z${zmbnum}_t${vnum}"
+        slimatrix="${InplaneMotinFolder}/MAT/epiSMSsli_mc_mat_z${zmbnum}_t${vnum}"
 
         # concat vol + sli motion matrix
         convert_xfm -omat ${OneSamplingFolder}/prevols/volslimatrix -concat ${slimatrix} ${volmatrix}

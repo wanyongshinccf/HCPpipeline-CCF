@@ -142,8 +142,11 @@ do
 done
 
 # temporary save mat files here
+echo "mkdir -p ${inplanedir}/MAT"
 mkdir -p ${inplanedir}/MAT
+echo "mv ${inplanedir}/epiSMSsli_mc_mat_z* ${inplanedir}/MAT"
 mv ${inplanedir}/epiSMSsli_mc_mat_z* ${inplanedir}/MAT
+echo "inplane motion parameters are saved."
 
 # cleanup
 \rm -f  ${inplanedir}/ref* \

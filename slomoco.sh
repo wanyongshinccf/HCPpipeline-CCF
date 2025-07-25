@@ -86,7 +86,7 @@ echo "Do SLOMOCO HCP"
 echo "SLOMOCO STEP1: Inplane motion correction"
 $RUN "$HCPPIPECCFDIR"/slomoco_inplane.sh    \
     ${InputfMRIgdc}                         \
-    ${SLOMOCOFolder}/epi_gdc_mocoxy         \
+    ${SLOMOCOFolder}/epi_mocoxy             \
     ${ScoutInput}                           \
     ${ScoutInput_mask}                      \
     ${MotionMatrixFolder}                   \
@@ -97,7 +97,7 @@ $RUN "$HCPPIPECCFDIR"/slomoco_inplane.sh    \
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
 echo "SLOMOCO STEP2: Out-of-plane motion estimation"
 $RUN "$HCPPIPECCFDIR"/slomoco_outofplane.sh \
-    ${SLOMOCOFolder}/epi_gdc_mocoxy         \
+    ${SLOMOCOFolder}/epi_mocoxy         \
     ${ScoutInput}                           \
     ${ScoutInput_mask}                      \
     ${MotionMatrixFolder}                   \
@@ -121,7 +121,7 @@ echo "               SLOMOCO is resampled first in native space with regress-out
 echo "               Then move to MNI space later again using OneSampling_SLOMOCO.sh"
 $RUN "$HCPPIPECCFDIR"/slomoco_onesampling.sh \
     ${InputfMRI}                \
-    ${OutputfMRI}               \
+    ${SLOMOCOFolder}/epi_gdc_mocoxy     \
     ${GradientDistortionField}  \
     ${MotionMatrixFolder}       \
     ${SLOMOCOFolder}            \
@@ -141,11 +141,11 @@ $RUN "$HCPPIPECCFDIR"/slomoco_pvreg.sh \
 # regress-out 
 echo "SLOMOCO STEP6: Regress out 13 vol-/sli-/voxel-regressors."
 $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
-    ${InputfMRI}_mocoxy           \
-    ${OutputfMRI}    \
-    ${ScoutInput_mask}       \
-    ${SLOMOCOFolder}       \
-    ${VolumeMotion1D}    \
-    ${SLOMOCOFolder}/slimopa.1D    \
-    ${PhysioRegressor1D}    \
+    ${SLOMOCOFolder}/epi_gdc_mocoxy \
+    ${OutputfMRI}                   \
+    ${ScoutInput_mask}              \
+    ${SLOMOCOFolder}                \
+    ${VolumeMotion1D}               \
+    ${SLOMOCOFolder}/slimopa.1D     \
+    ${PhysioRegressor1D}            \
     ${SLOMOCOFolder}/epi_pv 
