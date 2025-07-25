@@ -103,7 +103,7 @@ for ((t=0; t < $tdim; t++)); do
     \rm -f ${OneSamplingFolder}/MAT_${vnum}_all_warp.nii.gz
 done
 
-verbose_red_echo "---> Merging results"
+echo "---> Merging results"
 # Merge together results and restore the TR (saved beforehand)
 ${FSLDIR}/bin/fslmerge -tr ${output} $FrameMergeSTRING $tr
 
