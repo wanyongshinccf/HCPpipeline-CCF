@@ -108,5 +108,4 @@ echo "---> Merging results"
 ${FSLDIR}/bin/fslmerge -tr ${OutputfMRI} $FrameMergeSTRING $tr
 
 # Do Basic Cleanup
-\rm -r ${OneSamplingFolder}/postvols
-\rm -r ${OneSamplingFolder}/prevols
+\rm -rf ${OneSamplingFolder}

@@ -11,48 +11,50 @@ Usage() {
     exit
 }
 
-input=`${FSLDIR}/bin/remove_ext ${1}`
-output=`${FSLDIR}/bin/remove_ext ${2}`
-mask=${3}
-slomocodir=${4}
-volmot1d=${5} #MotionMatrices
-slimot1d=${6}
-physio1d=${7}
-voxelpv=${8}
+InputfMRI=`${FSLDIR}/bin/remove_ext ${1}`
+OutputfMRI=`${FSLDIR}/bin/remove_ext ${2}`
+ScoutInput_mask=${3}
+SLOMOCOFolder=${4}
+VolumeMotion1D=${5} #MotionMatrices
+SliceMotion1D=${6}
+PhysioRegressor1D=${7}
+PVTimeSeries=${8}
 
 TESTWS=0
 if [ $TESTWS -gt 0 ]; then
 fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
-input=$fMRIFolder/rfMRI_REST1_RL_gdc
-output=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
-base=$fMRIFolder/Scout_gdc
-mask=$fMRIFolder/Scout_gdc_mask
-motionmatrixdir=$fMRIFolder/MotionMatrices
-slomocodir="$fMRIFolder"/SLOMOCO                               
-volmot1d="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
-physio1d="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D       
-tfile=/mnt/hcp01/SW/HCPpipeline-CCF/SliceAcqTime_3T_TR720ms.txt
+fMRIFolder=/home/shinw/HCP/100206/rfMRI_REST1_RL
+SLOMOCOFolder=$fMRIFolder/SLOMOCO
+InputfMRI=$SLOMOCOFolder/epi_gdc_mocoxy
+OutputfMRI=$fMRIFolder/rfMRI_REST1_RL_slomoco         
+ScoutInput=$fMRIFolder/Scout_gdc
+ScoutInput_mask=$fMRIFolder/Scout_gdc_mask
+MotionMatrixFolder=$fMRIFolder/MotionMatrices                          
+VolumeMotion1D="$fMRIFolder"/MotionCorrection/rfMRI_REST1_RL_mc.par    
+PhysioRegressor1D="$fMRIFolder"/Physio/RetroTS.PMU.slibase.1D      
+SliceMotion1D=${SLOMOCOFolder}/slimopa.1D 
+PVTimeSeries=${SLOMOCOFolder}/epi_gdc_pv 
 fi
 
 # Step 1; prepare volmot + polinomial detrending
 1d_tool.py                  \
-    -infile $volmot1d       \
+    -infile $VolumeMotion1D       \
     -demean                 \
-    -write $slomocodir/__rm.mopa6.demean.1D  \
+    -write $SLOMOCOFolder/__rm.mopa6.demean.1D  \
     -overwrite
     
 # volmopa includues the polinominal (linear) detrending 
 3dDeconvolve                                                            \
-    -input  ${input}.nii.gz                                                      \
+    -input  ${InputfMRI}.nii.gz                                                      \
     -polort A                                                    \
     -num_stimts 6                                                       \
-    -stim_file 1 $slomocodir/__rm.mopa6.demean.1D'[0]' -stim_label 1 mopa1 -stim_base 1 	\
-    -stim_file 2 $slomocodir/__rm.mopa6.demean.1D'[1]' -stim_label 2 mopa2 -stim_base 2 	\
-    -stim_file 3 $slomocodir/__rm.mopa6.demean.1D'[2]' -stim_label 3 mopa3 -stim_base 3 	\
-    -stim_file 4 $slomocodir/__rm.mopa6.demean.1D'[3]' -stim_label 4 mopa4 -stim_base 4 	\
-    -stim_file 5 $slomocodir/__rm.mopa6.demean.1D'[4]' -stim_label 5 mopa5 -stim_base 5 	\
-    -stim_file 6 $slomocodir/__rm.mopa6.demean.1D'[5]' -stim_label 6 mopa6 -stim_base 6 	\
-    -x1D       $slomocodir/volreg.1D                                           \
+    -stim_file 1 $SLOMOCOFolder/__rm.mopa6.demean.1D'[0]' -stim_label 1 mopa1 -stim_base 1 	\
+    -stim_file 2 $SLOMOCOFolder/__rm.mopa6.demean.1D'[1]' -stim_label 2 mopa2 -stim_base 2 	\
+    -stim_file 3 $SLOMOCOFolder/__rm.mopa6.demean.1D'[2]' -stim_label 3 mopa3 -stim_base 3 	\
+    -stim_file 4 $SLOMOCOFolder/__rm.mopa6.demean.1D'[3]' -stim_label 4 mopa4 -stim_base 4 	\
+    -stim_file 5 $SLOMOCOFolder/__rm.mopa6.demean.1D'[4]' -stim_label 5 mopa5 -stim_base 5 	\
+    -stim_file 6 $SLOMOCOFolder/__rm.mopa6.demean.1D'[5]' -stim_label 6 mopa6 -stim_base 6 	\
+    -x1D       $SLOMOCOFolder/volreg.1D                                           \
     -x1D_stop                                                           \
     -overwrite
 
@@ -61,40 +63,57 @@ volregstr="-matrix volreg.1D "
 
 # step2 slimopa + physio 1D
 1d_tool.py                  \
-    -infile $physio1d       \
+    -infile $PhysioRegressor1D       \
     -demean                 \
-    -write $slomocodir/__rm.physio.1D  \
+    -write $SLOMOCOFolder/__rm.physio.1D  \
     -overwrite
 
 1d_tool.py                  \
-    -infile $slimot1d       \
+    -infile $SliceMotion1D       \
     -demean                 \
-    -write $slomocodir/__rm.slimot.1D  \
+    -write $SLOMOCOFolder/__rm.slimot.1D  \
     -overwrite
 
 # replace zero vectors with linear one
-\rm -f  $slomocodir/__rm.slimotzp.1D \
-        $slomocodir/slireg.1D
+\rm -f  $SLOMOCOFolder/__rm.slimotzp.1D \
+        $SLOMOCOFolder/slireg.1D
 python $HCPPIPECCFDIR/patch_zeros.py    \
-    -infile $slomocodir/__rm.slimot.1D \
-    -write  $slomocodir/__rm.slimotzp.1D  
+    -infile $SLOMOCOFolder/__rm.slimot.1D \
+    -write  $SLOMOCOFolder/__rm.slimotzp.1D  
 
 #  combine 
 python $HCPPIPECCFDIR/combine_physio_slimopa.py  \
-    -slireg $slomocodir/__rm.slimotzp.1D                      \
-    -physio $slomocodir/__rm.physio.1D                       \
-    -write  $slomocodir/slireg.1D  
+    -slireg $SLOMOCOFolder/__rm.slimotzp.1D                      \
+    -physio $SLOMOCOFolder/__rm.physio.1D                       \
+    -write  $SLOMOCOFolder/slireg.1D  
 
-sliregstr="-slibase_sm $slomocodir/slireg.1D " 
+sliregstr="-slibase_sm $SLOMOCOFolder/slireg.1D " 
 
-volregstr="-dsort $voxelpv "
+volregstr="-dsort ${PVTimeSeries}.nii.gz "
 
 # regress out all nuisances here
 3dREMLfit               \
-    -input  ${input}    \
+    -input  ${InputfMRI}.nii.gz    \
     $volregstr          \
     $sliregstr          \
     $voxregstr          \
-    -Oerrts $slomocodir/errts  \
+    -Oerrts $SLOMOCOFolder/errts.nii.gz  \
     -GOFORIT            \
     -overwrite       
+
+# injected tissue contrast and make output
+3dTstat -mean -prefix $SLOMOCOFolder/__rm.mean.nii.gz ${InputfMRI}.nii.gz
+3dcalc \
+    -a $SLOMOCOFolder/errts.nii.gz \
+    -b $SLOMOCOFolder/__rm.mean.nii.gz \
+    -expr 'a+b' \
+    -prefix $OutputfMRI.nii.gz \
+    -overwrite
+
+# clean
+\rm -f  $SLOMOCOFolder/__rm.* \
+        $SLOMOCOFolder/errts.* \
+        $SLOMOCOFolder/epi_gdc_pv.nii.gz 
+
+echo "Finished: 13 vol-/sli-/vox-wise motion nuisance regressors & "
+echo "          polymonial detrending lines are regressed out."

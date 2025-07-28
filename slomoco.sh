@@ -41,7 +41,7 @@ if [ $TESTWS -gt 0 ]; then
 fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
 InputfMRI=$fMRIFolder/rfMRI_REST1_RL_orig
 InputfMRIgdc=$fMRIFolder/rfMRI_REST1_RL_gdc
-OutfMRI=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco         
+OutfMRI=$fMRIFolder/rfMRI_REST1_RL_slomoco         
 ScoutInput=$fMRIFolder/Scout_gdc
 ScoutInput_mask=$fMRIFolder/Scout_gdc_mask
 MotionMatrixFolder=$fMRIFolder/MotionMatrices
@@ -80,10 +80,6 @@ elif [ $SMSfactor != "8" ] ; then
     echo "Warning: SMS factor in 3T HCP is expected to be 8."
 fi
 
-SKIPWS=0
-if [ $SKIPWS -gt 0 ]; then
-echo SKIP: SLOMOCO steps 1 to 3
-else
 echo "Do SLOMOCO HCP"
 # inplane motion correction
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
@@ -141,7 +137,7 @@ $RUN "$HCPPIPECCFDIR"/slomoco_pvreg.sh \
     ${GradientDistortionField}  \
     ${MotionMatrixFolder}       \
     ${PartialVolumeFolder} 
-fi # W.S
+
 # regress-out 
 echo "SLOMOCO STEP6: Regress out 13 vol-/sli-/voxel-regressors."
 $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
