@@ -11,16 +11,17 @@ Usage() {
     exit
 }
 
-InputfMRI=`${FSLDIR}/bin/remove_ext ${1}`
+InputfMRIgdc=`${FSLDIR}/bin/remove_ext ${1}`
 OutputfMRI=`${FSLDIR}/bin/remove_ext ${2}`
-GradientDistortionField=`${FSLDIR}/bin/remove_ext${3}` 
+GradientDistortionField=`${FSLDIR}/bin/remove_ext ${3}` 
 MotionMatrixDir=${4} #MotionMatrices
 PartialVolumeFolder=${5}
 
 TESTWS=0
 if [ $TESTWS -gt 0 ]; then
-fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
-InputfMRI=$fMRIFolder/rfMRI_REST1_RL_orig
+fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL 
+fMRIFolder=/home/shinw/HCP/100206/rfMRI_REST1_RL
+InputfMRItdc=$fMRIFolder/rfMRI_REST1_RL_gdc
 OutputfMRI=$fMRIFolder/SLOMOCO/epi_gdc_pv        
 GradientDistortionField=${3}"$fMRIFolder"/rfMRI_REST1_RL_gdc_warp 
 MotionMatrixDir=$fMRIFolder/MotionMatrices
@@ -33,14 +34,13 @@ if [ ! -d ${PartialVolumeFolder} ]; then
 fi
 
 ## read dimensions
-zdim=`fslval $InputfMRI dim3`
-tdim=`fslval $InputfMRI dim4`
-tr=`fslval $InputfMRI pixdim4`
-let "zmbdim=$zdim/$SMSfactor"
+zdim=`fslval $InputfMRIgdc dim3`
+tdim=`fslval $InputfMRIgdc dim4`
+tr=`fslval $InputfMRIgdc pixdim4`
 
 # generate mean volume of input
-fslmaths $InputfMRI -Tmean ${PartialVolumeFolder}/epimean
-fslsplit $InputfMRI ${PartialVolumeFolder}/vol  -t
+fslmaths $InputfMRIgdc -Tmean ${PartialVolumeFolder}/epimean
+fslsplit $InputfMRIgdc ${PartialVolumeFolder}/vol  -t
 
 # generate the reference images at each TR
 str_tcombined=""
@@ -52,26 +52,14 @@ do
     fmat=${MotionMatrixDir}/MAT_${vnum}
     convert_xfm -omat ${PartialVolumeFolder}/bmat -inverse $fmat
 
-    # Add stuff for estimating RMS motion
-    volmatrix="${MotionMatrixFolder}/MAT_${vnum}"
-
-    # Combine GCD with injected motion
-    ${FSLDIR}/bin/convertwarp \
-    --relout --rel \
-    --ref=${PartialVolumeFolder}/epimean \
-    --warp1=${GradientDistortionField} \
-    --postmat=${PartialVolumeFolder}/bmat \
-    --out=${PartialVolumeFolder}/MAT_${vnum}_gdc_warp    
-    
-    # Apply one-step warp, using spline interpolation
-    ${FSLDIR}/bin/applywarp \
-        --rel \
-        --interp=nn \
-        --in=${PartialVolumeFolder}/vol${vnum} \
-        --warp=${PartialVolumeFolder}/MAT_${vnum}_gdc_warp \
-        --ref=${PartialVolumeFolder}/epimean \
-        --out=${PartialVolumeFolder}/motsim
-
+    # generate MOTSIM
+    flirt                                       \
+        -in             ${PartialVolumeFolder}/vol${vnum}         \
+        -ref            ${PartialVolumeFolder}/epimean        \
+        -applyxfm -init ${PartialVolumeFolder}/bmat           \
+        -out            ${PartialVolumeFolder}/motsim  \
+        -interp         nearestneighbour
+        
     # move back MOTSIM
     flirt                                       \
         -in             ${PartialVolumeFolder}/motsim         \

@@ -80,6 +80,10 @@ elif [ $SMSfactor != "8" ] ; then
     echo "Warning: SMS factor in 3T HCP is expected to be 8."
 fi
 
+SKIPWS=0
+if [ $SKIPWS -gt 0 ]; then
+echo SKIP: SLOMOCO steps 1 to 3
+else
 echo "Do SLOMOCO HCP"
 # inplane motion correction
 # HCP version of run_correction_vol_slicemocoxy_afni.tcsh
@@ -132,12 +136,12 @@ $RUN "$HCPPIPECCFDIR"/slomoco_onesampling.sh \
 # HCP version of gen_pvreg.tcsh
 echo "SLOMOCO STEP5: Voxelwise partial volume regressor." 
 $RUN "$HCPPIPECCFDIR"/slomoco_pvreg.sh \
-    ${InputfMRI}                \
+    ${InputfMRIgdc}                \
     ${SLOMOCOFolder}/epi_gdc_pv     \
     ${GradientDistortionField}  \
     ${MotionMatrixFolder}       \
-    ${PartialVolumeFolder}
-
+    ${PartialVolumeFolder} 
+fi # W.S
 # regress-out 
 echo "SLOMOCO STEP6: Regress out 13 vol-/sli-/voxel-regressors."
 $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
@@ -150,4 +154,7 @@ $RUN "$HCPPIPECCFDIR"/slomoco_regout.sh \
     ${PhysioRegressor1D}            \
     ${SLOMOCOFolder}/epi_gdc_pv 
 
+# clean up
 rm -f ${SLOMOCOFolder}/epi_mocoxy* \
+#rm -f ${SLOMOCOFolder}/epi_gdc_mocoxy* \
+#rm -f ${SLOMOCOFolder}/epi_pv* \

@@ -14,17 +14,17 @@ Usage() {
 InputfMRI=`${FSLDIR}/bin/remove_ext ${1}`
 OutputfMRI=`${FSLDIR}/bin/remove_ext ${2}`
 GradientDistortionField=`${FSLDIR}/bin/remove_ext ${3}`
-MotionMatrixFolder=${4} #MotionMatrices
-SLOMOCOFolder=${5} #MotionMatrices
-InplaneMotinFolder=${6} #MotionMatrices
-OutofPlaneMotionFolder=${7} #MotionMatrices
+MotionMatrixFolder=${4} 
+SLOMOCOFolder=${5} 
+InplaneMotinFolder=${6} 
+OutofPlaneMotionFolder=${7} 
 SMSfactor=${8}
 
 TESTWS=0
 if [ $TESTWS -gt 0 ]; then
 fMRIFolder=/mnt/hcp01/WU_MINN_HCP/100206/rfMRI_REST1_RL
 InputfMRI=$fMRIFolder/rfMRI_REST1_RL_orig
-OutputfMRI=$fMRIFolder/rfMRI_REST1_RL_gdc_slomoco   
+OutputfMRI=$fMRIFolder/SLOMOCO/epi_gdc_mocoxy   
 GradientDistortionField="$fMRIFolder"/rfMRI_REST1_RL_gdc_warp   
 MotionMatrixFolder=$fMRIFolder/MotionMatrices
 SLOMOCOFolder="$fMRIFolder"/SLOMOCO    
@@ -105,7 +105,7 @@ done
 
 echo "---> Merging results"
 # Merge together results and restore the TR (saved beforehand)
-${FSLDIR}/bin/fslmerge -tr ${output} $FrameMergeSTRING $tr
+${FSLDIR}/bin/fslmerge -tr ${OutputfMRI} $FrameMergeSTRING $tr
 
 # Do Basic Cleanup
 \rm -r ${OneSamplingFolder}/postvols
