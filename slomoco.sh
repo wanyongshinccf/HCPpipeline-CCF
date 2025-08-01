@@ -33,7 +33,7 @@ MotionMatrixFolder=${6} #MotionMatrices "$fMRIFolder"/MotionCorrection/"$NameOff
 SLOMOCOFolder=${7}
 GradientDistortionField=${8}
 VolumeMotion1D=${9} # 1dsliacqtime
-PhysioRegressor1D=${10} # 1dsliacqtime
+PhysioRegressor1D=${10} # 1dphysiofile
 SliAcqTimeFile=${11} # 1dsliacqtime
 
 TESTWS=0

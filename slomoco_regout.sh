@@ -63,12 +63,6 @@ volregstr="-matrix volreg.1D "
 
 # step2 slimopa + physio 1D
 1d_tool.py                  \
-    -infile $PhysioRegressor1D       \
-    -demean                 \
-    -write $SLOMOCOFolder/__rm.physio.1D  \
-    -overwrite
-
-1d_tool.py                  \
     -infile $SliceMotion1D       \
     -demean                 \
     -write $SLOMOCOFolder/__rm.slimot.1D  \
@@ -81,11 +75,21 @@ python $HCPPIPECCFDIR/patch_zeros.py    \
     -infile $SLOMOCOFolder/__rm.slimot.1D \
     -write  $SLOMOCOFolder/__rm.slimotzp.1D  
 
-#  combine 
-python $HCPPIPECCFDIR/combine_physio_slimopa.py  \
-    -slireg $SLOMOCOFolder/__rm.slimotzp.1D                      \
-    -physio $SLOMOCOFolder/__rm.physio.1D                       \
-    -write  $SLOMOCOFolder/slireg.1D  
+if [ -e $PhysioRegressor1D ]; then
+    1d_tool.py                  \
+        -infile $PhysioRegressor1D       \
+        -demean                 \
+        -write $SLOMOCOFolder/__rm.physio.1D  \
+        -overwrite
+
+    #  combine 
+    python $HCPPIPECCFDIR/combine_physio_slimopa.py  \
+        -slireg $SLOMOCOFolder/__rm.slimotzp.1D                      \
+        -physio $SLOMOCOFolder/__rm.physio.1D                       \
+        -write  $SLOMOCOFolder/slireg.1D
+else
+    \cp -f $SLOMOCOFolder/__rm.slimotzp.1D  $SLOMOCOFolder/slireg.1D
+fi
 
 sliregstr="-slibase_sm $SLOMOCOFolder/slireg.1D " 
 
